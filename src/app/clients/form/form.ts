@@ -23,11 +23,11 @@ export class Form implements OnInit {
     private router: Router
   ) {
     this.form = this.fb.group({
-      nombre: ['', Validators.required],
-      apellido: ['', Validators.required],
-      fecha_nacimiento: ['', Validators.required],
+      name: ['', Validators.required],
+      lastname: ['', Validators.required],
+      birthdate: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      telefono: ['', Validators.required]
+      cell: ['', Validators.required]
     });
   }
 
