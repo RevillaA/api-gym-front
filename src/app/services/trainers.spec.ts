@@ -25,63 +25,60 @@ describe('Trainers Service', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
+        provideHttpClient(),          // Provee HttpClient real
+        provideHttpClientTesting(),   // Provee HttpClient para testing
       ],
     });
 
-    service = TestBed.inject(Trainers);
-    httpMock = TestBed.inject(HttpTestingController);
+    service = TestBed.inject(Trainers);          // Inyecta servicio Trainers
+    httpMock = TestBed.inject(HttpTestingController); // Inyecta mock de HTTP
   });
 
   afterEach(() => {
+    // Verifica que no queden solicitudes HTTP pendientes
     httpMock.verify();
   });
 
-  // ========================
-  // CREACIÓN DEL SERVICIO
-  // ========================
+  // 1. CREACIÓN DEL SERVICIO
+  // Verifica que el servicio Trainers se haya creado correctamente
   it('should be created', () => {
-    expect(service).toBeTruthy();
-    expect(service).toBeDefined();
+    expect(service).toBeTruthy(); // Servicio existe
+    expect(service).toBeDefined(); // Servicio está definido
   });
 
-  // ========================
-  // GET ALL
-  // ========================
+  // 2. OBTENER TODOS LOS ENTRENADORES
+  // Prueba que getAll devuelve un array de entrenadores correctamente
   it('should get all trainers', () => {
     service.getAll().subscribe(trainers => {
-      expect(trainers).toBeTruthy();
-      expect(trainers.length).toBeGreaterThan(0);
-      expect(trainers[0].especialidad).toBe('Fitness');
+      expect(trainers).toBeTruthy(); // Debe retornar algo
+      expect(trainers.length).toBeGreaterThan(0); // Al menos 1 entrenador
+      expect(trainers[0].especialidad).toBe('Fitness'); // Especialidad correcta
     });
 
     const req = httpMock.expectOne(apiUrl);
-    expect(req.request.method).toBe('GET');
+    expect(req.request.method).toBe('GET'); // Solicitud GET
 
-    req.flush([mockTrainer]);
+    req.flush([mockTrainer]); // Respuesta simulada
   });
 
-  // ========================
-  // GET BY ID
-  // ========================
+  // 3. OBTENER ENTRENADOR POR ID
+  // Prueba que getById devuelve el entrenador correcto según ID
   it('should get trainer by id', () => {
     service.getById(1).subscribe(trainer => {
-      expect(trainer).toBeTruthy();
-      expect(trainer.id_entrenador).toBe(1);
-      expect(trainer.nombre).toEqual('Carlos');
-      expect(trainer.estado).toBeTrue();
+      expect(trainer).toBeTruthy(); // Entrenador existe
+      expect(trainer.id_entrenador).toBe(1); // ID correcto
+      expect(trainer.nombre).toEqual('Carlos'); // Nombre correcto
+      expect(trainer.estado).toBeTrue(); // Estado activo
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('GET');
+    expect(req.request.method).toBe('GET'); // Solicitud GET por ID
 
-    req.flush(mockTrainer);
+    req.flush(mockTrainer); // Respuesta simulada
   });
 
-  // ========================
-  // CREATE
-  // ========================
+  // 4. CREAR ENTRENADOR
+  // Prueba que create envía y recibe correctamente un nuevo entrenador
   it('should create a trainer', () => {
     const createPayload: Trainer = {
       nombre: 'Carlos',
@@ -93,21 +90,20 @@ describe('Trainers Service', () => {
     };
 
     service.create(createPayload).subscribe(trainer => {
-      expect(trainer).toBeDefined();
-      expect(trainer.id_entrenador).toBeGreaterThan(0);
-      expect(trainer.email).toContain('@');
+      expect(trainer).toBeDefined(); // Entrenador creado
+      expect(trainer.id_entrenador).toBeGreaterThan(0); // ID asignado
+      expect(trainer.email).toContain('@'); // Email válido
     });
 
     const req = httpMock.expectOne(apiUrl);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body.nombre).toBe('Carlos');
+    expect(req.request.method).toBe('POST'); // Solicitud POST
+    expect(req.request.body.nombre).toBe('Carlos'); // Body correcto
 
-    req.flush(mockTrainer);
+    req.flush(mockTrainer); // Respuesta simulada
   });
 
-  // ========================
-  // UPDATE
-  // ========================
+  // 5. ACTUALIZAR ENTRENADOR
+  // Prueba que update modifica correctamente la especialidad del entrenador
   it('should update a trainer', () => {
     const updatePayload: Trainer = {
       ...mockTrainer,
@@ -115,28 +111,27 @@ describe('Trainers Service', () => {
     };
 
     service.update(1, updatePayload).subscribe(trainer => {
-      expect(trainer.especialidad).toBe('Crossfit');
-      expect(trainer.nombre).toBe('Carlos');
+      expect(trainer.especialidad).toBe('Crossfit'); // Especialidad actualizada
+      expect(trainer.nombre).toBe('Carlos'); // Nombre permanece igual
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body.especialidad).toBe('Crossfit');
+    expect(req.request.method).toBe('PUT'); // Solicitud PUT
+    expect(req.request.body.especialidad).toBe('Crossfit'); // Body correcto
 
-    req.flush(updatePayload);
+    req.flush(updatePayload); // Respuesta simulada
   });
 
-  // ========================
-  // DELETE
-  // ========================
+  // 6. ELIMINAR ENTRENADOR
+  // Prueba que delete elimina el entrenador correctamente
   it('should delete a trainer', () => {
     service.delete(1).subscribe(response => {
-      expect(response).toBeNull();
+      expect(response).toBeNull(); // Respuesta esperada null
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('DELETE');
+    expect(req.request.method).toBe('DELETE'); // Solicitud DELETE
 
-    req.flush(null);
+    req.flush(null); // Respuesta simulada
   });
 });

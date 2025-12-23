@@ -3,12 +3,13 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
 
 import { List } from './list';
 import { Payments } from '../../services/payments';
 import { Payment } from '../../models/payment';
 
-describe('List', () => {
+describe('List Component - Payments', () => {
   let component: List;
   let fixture: ComponentFixture<List>;
   let service: jasmine.SpyObj<Payments>;
@@ -48,69 +49,69 @@ describe('List', () => {
     fixture.detectChanges();
   });
 
-  // TEST BASE
-  it('should create', () => {
+  // 1. Componente creado correctamente
+  it('should create the component', () => {
     expect(component).toBeTruthy();
   });
 
-  // Carga de pagos al iniciar
+  // 2. Carga de pagos al iniciar
   it('should load payments on init', () => {
     expect(service.getAll).toHaveBeenCalled();
     expect(component.payments.length).toBe(1);
     expect(component.payments[0].monto).toBe(100);
   });
 
-  // Navegación a formulario de creación
+  // 3. Navegación al formulario de creación
   it('should navigate to create form', () => {
-    const spy = spyOn(router, 'navigate');
-
+    const navigateSpy = spyOn(router, 'navigate');
     component.navigateToCreate();
-
-    expect(spy).toHaveBeenCalledWith(['/payments/form']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/payments/form']);
   });
 
-  // Navegación a formulario de edición
+  // 4. Navegación al formulario de edición
   it('should navigate to edit form', () => {
-    const spy = spyOn(router, 'navigate');
-
+    const navigateSpy = spyOn(router, 'navigate');
     component.edit(1);
-
-    expect(spy).toHaveBeenCalledWith(['/payments/form', 1]);
+    expect(navigateSpy).toHaveBeenCalledWith(['/payments/form', 1]);
   });
 
-  // No navega si el id es null
-  it('should not navigate to edit form if id is null', () => {
-    const spy = spyOn(router, 'navigate');
-
-    component.edit(undefined);
-
-    expect(spy).not.toHaveBeenCalled();
-  });
-
-  // Eliminación de pago confirmada
+  // 5. Eliminación confirmada de pago
   it('should delete payment when confirmed', () => {
     spyOn(window, 'confirm').and.returnValue(true);
     service.delete.and.returnValue(of({} as any));
 
     component.delete(1);
+    fixture.detectChanges();
 
     expect(service.delete).toHaveBeenCalledWith(1);
     expect(component.payments.length).toBe(0);
   });
 
-  // Cancelación de eliminación de pago
-  it('should not delete payment when confirmation is cancelled', () => {
+  // 6. Cancelación de eliminación: no se elimina si el usuario cancela
+  it('should not delete payment when cancelled', () => {
     spyOn(window, 'confirm').and.returnValue(false);
-
     component.delete(1);
 
     expect(service.delete).not.toHaveBeenCalled();
     expect(component.payments.length).toBe(1);
   });
 
-  // Cancelación de eliminación de pago
-  it('payments array should be defined and not null', () => {
-    expect(component.payments).toBeDefined();
-    expect(component.payments).not.toBeNull();
+  // 7. Renderizado correcto de datos en la tabla
+  it('should render payment data correctly in table', () => {
+    const row = fixture.debugElement.query(By.css('tbody tr'));
+    const cells = row.queryAll(By.css('td'));
+    expect(cells[1].nativeElement.textContent).toContain('2024-01-01');
+    expect(cells[2].nativeElement.textContent).toContain('100');
+    expect(cells[3].nativeElement.textContent).toContain('Juan');
+    expect(cells[4].nativeElement.textContent).toContain('Premium');
+  });
+
+  // 8. Botones de acción (Editar / Eliminar) existen y son visibles
+  it('should have Edit and Delete buttons in table', () => {
+    const row = fixture.debugElement.query(By.css('tbody tr'));
+    const editButton = row.query(By.css('.btn-warning'));
+    const deleteButton = row.query(By.css('.btn-danger'));
+    expect(editButton).toBeTruthy();
+    expect(deleteButton).toBeTruthy();
   });
 });

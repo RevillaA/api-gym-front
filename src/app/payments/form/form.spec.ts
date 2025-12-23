@@ -13,7 +13,7 @@ import { Payment } from '../../models/payment';
 import { Client } from '../../models/client';
 import { Membership } from '../../models/membership';
 
-describe('Form', () => {
+describe('Payment Form', () => {
   let component: Form;
   let fixture: ComponentFixture<Form>;
   let paymentsService: jasmine.SpyObj<Payments>;
@@ -54,9 +54,7 @@ describe('Form', () => {
         { provide: Memberships, useValue: membershipsService },
         {
           provide: ActivatedRoute,
-          useValue: {
-            snapshot: { params: {} },
-          },
+          useValue: { snapshot: { params: {} } },
         },
       ],
     }).compileComponents();
@@ -67,12 +65,12 @@ describe('Form', () => {
     fixture.detectChanges();
   });
 
-  // TEST BASE
-  it('should create', () => {
+  // 1. El componente se crea correctamente
+  it('should create the component', () => {
     expect(component).toBeTruthy();
   });
 
-  // Carga de clientes y membresías
+  // 2. Los clientes y membresías se cargan correctamente al inicializar
   it('should load clients and memberships on init', () => {
     expect(clientsService.getAll).toHaveBeenCalled();
     expect(membershipsService.getAll).toHaveBeenCalled();
@@ -80,7 +78,7 @@ describe('Form', () => {
     expect(component.memberships.length).toBe(1);
   });
 
-  // Crear pago
+  // 3. Crear pago con formulario válido
   it('should create payment when form is valid', () => {
     paymentsService.create.and.returnValue(of({} as any));
     const spy = spyOn(router, 'navigate');
@@ -97,7 +95,7 @@ describe('Form', () => {
     expect(spy).toHaveBeenCalledWith(['/payments']);
   });
 
-  // Editar pago
+  // 4. Editar pago correctamente
   it('should update payment when editing', () => {
     component.isEdit = true;
     component.id = 1;
@@ -119,7 +117,7 @@ describe('Form', () => {
     expect(spy).toHaveBeenCalledWith(['/payments']);
   });
 
-  // Cancelar
+  // 5. Cancelar debe navegar a /payments
   it('should navigate back on cancel', () => {
     const spy = spyOn(router, 'navigate');
 
@@ -128,7 +126,7 @@ describe('Form', () => {
     expect(spy).toHaveBeenCalledWith(['/payments']);
   });
 
-  // Validaciones
+  // 6. Validación del campo monto
   it('should validate monto field correctly', () => {
     const montoControl = component.form.get('monto');
 
@@ -138,5 +136,27 @@ describe('Form', () => {
     montoControl?.setValue(100);
     expect(montoControl?.value).toEqual(100);
     expect(montoControl?.value).toBeGreaterThan(0);
-  });  
+  });
+
+  // 7. Formulario inválido si algún campo requerido no está definido
+  it('should be invalid when required fields are missing', () => {
+    component.form.setValue({
+      id_cliente: null,
+      id_membresia: 1,
+      monto: 50,
+    });
+
+    expect(component.form.valid).toBeFalse();
+  });
+
+  // 8. Formulario válido con todos los campos correctos
+  it('should be valid when all required fields are filled', () => {
+    component.form.setValue({
+      id_cliente: 1,
+      id_membresia: 1,
+      monto: 50,
+    });
+
+    expect(component.form.valid).toBeTrue();
+  });
 });

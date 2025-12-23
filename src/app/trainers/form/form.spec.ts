@@ -8,7 +8,7 @@ import { Form } from './form';
 import { Trainers } from '../../services/trainers';
 import { Trainer } from '../../models/trainer';
 
-describe('Form', () => {
+describe('Trainer Form Component - Frontend Unit Tests', () => {
   let component: Form;
   let fixture: ComponentFixture<Form>;
   let service: jasmine.SpyObj<Trainers>;
@@ -24,12 +24,17 @@ describe('Form', () => {
     fecha_contratacion: '2024-01-01',
   } as Trainer;
 
+  const validFormData = {
+    nombre: 'Carlos',
+    apellido: 'Gómez',
+    email: 'carlos@test.com',
+    telefono: '0999999999',
+    especialidad: 'Fuerza',
+    fecha_contratacion: '2024-01-01',
+  };
+
   beforeEach(async () => {
-    const serviceSpy = jasmine.createSpyObj('Trainers', [
-      'getById',
-      'create',
-      'update',
-    ]);
+    const serviceSpy = jasmine.createSpyObj('Trainers', ['getById', 'create', 'update']);
 
     await TestBed.configureTestingModule({
       imports: [Form],
@@ -53,85 +58,87 @@ describe('Form', () => {
     fixture.detectChanges();
   });
 
-  // TEST BASE
-  it('should create', () => {
+  // 1. El componente se crea correctamente
+  it('should create the component', () => {
     expect(component).toBeTruthy();
   });
 
-  // Formulario creado correctamente
+  // 2. El formulario reactivo se inicializa correctamente
   it('should create the form group', () => {
     expect(component.form).toBeDefined();
     expect(component.form.valid).toBeFalse();
   });
 
-  // Controles requeridos existen
+  // 3. El formulario debe contener todos los controles requeridos
   it('should contain required form controls', () => {
-    expect(component.form.contains('nombre')).toBeTrue();
-    expect(component.form.contains('apellido')).toBeTrue();
-    expect(component.form.contains('email')).toBeTrue();
-    expect(component.form.contains('telefono')).toBeTrue();
-    expect(component.form.contains('especialidad')).toBeTrue();
-    expect(component.form.contains('fecha_contratacion')).toBeTrue();
+    const controls = [
+      'nombre',
+      'apellido',
+      'email',
+      'telefono',
+      'especialidad',
+      'fecha_contratacion'
+    ];
+    controls.forEach(ctrl => {
+      expect(component.form.contains(ctrl)).toBeTrue();
+    });
   });
 
-  // Formulario válido con datos correctos
-  it('should be valid when form is filled correctly', () => {
-    component.form.setValue({
-      nombre: 'Carlos',
-      apellido: 'Gómez',
-      email: 'carlos@test.com',
-      telefono: '0999999999',
-      especialidad: 'Fuerza',
-      fecha_contratacion: '2024-01-01',
-    });
+  // 4. El formulario debe ser inválido cuando está vacío
+  it('should be invalid when form is empty', () => {
+    component.form.reset();
+    expect(component.form.valid).toBeFalse();
+  });
 
+  // 5. El formulario es válido cuando se completan los campos requeridos
+  it('should be valid when required fields are filled', () => {
+    component.form.setValue(validFormData);
     expect(component.form.valid).toBeTrue();
   });
 
-  // Crear entrenador cuando no es edición
-  it('should call create when submitting in create mode', () => {
-    const spy = spyOn(router, 'navigate');
-
-    component.form.setValue({
-      nombre: 'Carlos',
-      apellido: 'Gómez',
-      email: 'carlos@test.com',
-      telefono: '0999999999',
-      especialidad: 'Fuerza',
-      fecha_contratacion: '2024-01-01',
-    });
-
-    component.submit();
-
-    expect(service.create).toHaveBeenCalled();
-    expect(spy).toHaveBeenCalledWith(['/trainers']);
+  // 6. Validación de email: formato incorrecto
+  it('should invalidate email with wrong format', () => {
+    const emailControl = component.form.get('email');
+    emailControl?.setValue('correo-invalido');
+    expect(emailControl?.valid).toBeFalse();
+    expect(emailControl?.errors).toBeDefined();
   });
 
-  // Cancelar navegación
-  it('should navigate back on cancel', () => {
-    const spy = spyOn(router, 'navigate');
-
-    component.cancel();
-
-    expect(spy).toHaveBeenCalledWith(['/trainers']);
-  });
-
-  // Validaciones
+  // 7. Prevención de submit cuando el formulario es inválido
   it('should not submit if form is invalid', () => {
     component.form.reset();
-
     component.submit();
-
     expect(service.create).not.toHaveBeenCalled();
     expect(service.update).not.toHaveBeenCalled();
   });
 
-  // Validaciones
-  it('email control should be invalid with wrong format', () => {
-    const emailControl = component.form.get('email');
+  // 8. Crear entrenador en modo creación
+  it('should call create when submitting in create mode', () => {
+    const navigateSpy = spyOn(router, 'navigate');
+    component.form.setValue(validFormData);
+    component.submit();
+    expect(service.create).toHaveBeenCalledWith(validFormData);
+    expect(navigateSpy).toHaveBeenCalledWith(['/trainers']);
+  });
 
-    emailControl?.setValue('correo-invalido');
+  // 9. Botón Guardar debe habilitarse/deshabilitarse según la validez del formulario
+  it('should enable/disable submit button based on form validity', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    const button = compiled.querySelector('button[type="submit"]') as HTMLButtonElement;
 
-    expect(emailControl?.valid).toBeFalse();
+    component.form.reset();
+    fixture.detectChanges();
+    expect(button.disabled).toBeTrue();
+
+    component.form.setValue(validFormData);
+    fixture.detectChanges();
+    expect(button.disabled).toBeFalse();
+  });
+
+  // 10. Cancelar navegación
+  it('should navigate back on cancel', () => {
+    const navigateSpy = spyOn(router, 'navigate');
+    component.cancel();
+    expect(navigateSpy).toHaveBeenCalledWith(['/trainers']);
   });
 });

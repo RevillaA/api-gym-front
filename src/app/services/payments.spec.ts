@@ -26,64 +26,61 @@ describe('Payments Service', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
+        provideHttpClient(),          // Provee HttpClient real
+        provideHttpClientTesting(),   // Provee HttpClient para testing
       ],
     });
 
-    service = TestBed.inject(Payments);
-    httpMock = TestBed.inject(HttpTestingController);
+    service = TestBed.inject(Payments);          // Inyecta servicio Payments
+    httpMock = TestBed.inject(HttpTestingController); // Inyecta mock de HTTP
   });
 
   afterEach(() => {
+    // Verifica que no queden solicitudes HTTP pendientes
     httpMock.verify();
   });
 
-  // ========================
-  // CREACIÓN DEL SERVICIO
-  // ========================
+  // 1. CREACIÓN DEL SERVICIO
+  // Verifica que el servicio Payments se haya creado correctamente
   it('should be created', () => {
-    expect(service).toBeTruthy();
-    expect(service).toBeDefined();
+    expect(service).toBeTruthy(); // Servicio existe
+    expect(service).toBeDefined(); // Servicio está definido
   });
 
-  // ========================
-  // GET ALL
-  // ========================
+  // 2. OBTENER TODOS LOS PAGOS
+  // Prueba que getAll devuelve un array de pagos correctamente
   it('should get all payments', () => {
     service.getAll().subscribe(payments => {
-      expect(payments).toBeTruthy();
-      expect(payments.length).toBeGreaterThan(0);
-      expect(payments[0].monto).toBeGreaterThan(0);
-      expect(payments[0].cliente_nombre).toBe('Juan');
+      expect(payments).toBeTruthy(); // Debe retornar algo
+      expect(payments.length).toBeGreaterThan(0); // Al menos 1 pago
+      expect(payments[0].monto).toBeGreaterThan(0); // Monto válido
+      expect(payments[0].cliente_nombre).toBe('Juan'); // Nombre del cliente correcto
     });
 
     const req = httpMock.expectOne(apiUrl);
-    expect(req.request.method).toBe('GET');
+    expect(req.request.method).toBe('GET'); // Solicitud GET
 
-    req.flush([mockPayment]);
+    req.flush([mockPayment]); // Respuesta simulada
   });
 
-  // ========================
-  // GET BY ID
-  // ========================
+  // 3. OBTENER PAGO POR ID
+  // Prueba que getById devuelve el pago correcto según ID
   it('should get payment by id', () => {
     service.getById(1).subscribe(payment => {
-      expect(payment).toBeTruthy();
-      expect(payment.id_pago).toBe(1);
-      expect(payment.id_cliente).toEqual(10);
-      expect(payment.monto).toBe(45);
+      expect(payment).toBeTruthy(); // Pago existe
+      expect(payment.id_pago).toBe(1); // ID correcto
+      expect(payment.id_cliente).toEqual(10); // ID cliente correcto
+      expect(payment.monto).toBe(45); // Monto correcto
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('GET');
+    expect(req.request.method).toBe('GET'); // Solicitud GET por ID
 
-    req.flush(mockPayment);
+    req.flush(mockPayment); // Respuesta simulada
   });
 
-  // ========================
-  // CREATE
-  // ========================
+  // 4. CREAR PAGO
+  // Prueba que create envía y recibe correctamente un nuevo pago
   it('should create a payment', () => {
     const createPayload: Pick<Payment, 'id_cliente' | 'id_membresia' | 'monto'> = {
       id_cliente: 10,
@@ -92,22 +89,21 @@ describe('Payments Service', () => {
     };
 
     service.create(createPayload).subscribe(payment => {
-      expect(payment).toBeDefined();
-      expect(payment.id_pago).toBeGreaterThan(0);
-      expect(payment.monto).toBe(45);
+      expect(payment).toBeDefined(); // Pago creado
+      expect(payment.id_pago).toBeGreaterThan(0); // ID asignado
+      expect(payment.monto).toBe(45); // Monto correcto
     });
 
     const req = httpMock.expectOne(apiUrl);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body.id_cliente).toBe(10);
-    expect(req.request.body.monto).toEqual(45);
+    expect(req.request.method).toBe('POST'); // Solicitud POST
+    expect(req.request.body.id_cliente).toBe(10); // Body correcto
+    expect(req.request.body.monto).toEqual(45); // Body correcto
 
-    req.flush(mockPayment);
+    req.flush(mockPayment); // Respuesta simulada
   });
 
-  // ========================
-  // UPDATE
-  // ========================
+  // 5. ACTUALIZAR PAGO
+  // Prueba que update modifica correctamente el pago
   it('should update a payment', () => {
     const updatePayload = {
       id_membresia: 4,
@@ -115,28 +111,27 @@ describe('Payments Service', () => {
     };
 
     service.update(1, updatePayload).subscribe(payment => {
-      expect(payment.id_membresia).toBe(4);
-      expect(payment.monto).toBeGreaterThan(50);
+      expect(payment.id_membresia).toBe(4); // Membresía actualizada
+      expect(payment.monto).toBeGreaterThan(50); // Monto actualizado
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body.id_membresia).toBe(4);
+    expect(req.request.method).toBe('PUT'); // Solicitud PUT
+    expect(req.request.body.id_membresia).toBe(4); // Body correcto
 
-    req.flush({ ...mockPayment, ...updatePayload });
+    req.flush({ ...mockPayment, ...updatePayload }); // Respuesta simulada
   });
 
-  // ========================
-  // DELETE
-  // ========================
+  // 6. ELIMINAR PAGO
+  // Prueba que delete elimina el pago correctamente
   it('should delete a payment', () => {
     service.delete(1).subscribe(response => {
-      expect(response).toBeNull();
+      expect(response).toBeNull(); // Respuesta esperada null
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('DELETE');
+    expect(req.request.method).toBe('DELETE'); // Solicitud DELETE
 
-    req.flush(null);
+    req.flush(null); // Respuesta simulada
   });
 });

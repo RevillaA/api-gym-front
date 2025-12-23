@@ -21,64 +21,61 @@ describe('Memberships Service', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
+        provideHttpClient(),          // Provee HttpClient real
+        provideHttpClientTesting(),   // Provee HttpClient para testing
       ],
     });
 
-    service = TestBed.inject(Memberships);
-    httpMock = TestBed.inject(HttpTestingController);
+    service = TestBed.inject(Memberships);          // Inyecta servicio
+    httpMock = TestBed.inject(HttpTestingController); // Inyecta mock de HTTP
   });
 
   afterEach(() => {
+    // Verifica que no queden solicitudes HTTP pendientes después de cada prueba
     httpMock.verify();
   });
 
-  // ========================
-  // CREACIÓN DEL SERVICIO
-  // ========================
+  // 1. CREACIÓN DEL SERVICIO
+  // Verifica que el servicio Memberships se haya creado correctamente
   it('should be created', () => {
-    expect(service).toBeTruthy();
-    expect(service).toBeDefined();
+    expect(service).toBeTruthy(); // Servicio existe
+    expect(service).toBeDefined(); // Servicio está definido
   });
 
-  // ========================
-  // GET ALL
-  // ========================
+  // 2. OBTENER TODAS LAS MEMBRESÍAS
+  // Prueba que getAll devuelve correctamente un array de membresías
   it('should get all memberships', () => {
     service.getAll().subscribe(memberships => {
-      expect(memberships).toBeTruthy();
-      expect(memberships.length).toBeGreaterThan(0);
-      expect(memberships[0].tipo).toBe('Premium');
-      expect(memberships[0].precio).toBeGreaterThan(0);
+      expect(memberships).toBeTruthy(); // Debe retornar algo
+      expect(memberships.length).toBeGreaterThan(0); // Al menos 1 membresía
+      expect(memberships[0].tipo).toBe('Premium'); // Verifica tipo
+      expect(memberships[0].precio).toBeGreaterThan(0); // Verifica precio
     });
 
     const req = httpMock.expectOne(apiUrl);
-    expect(req.request.method).toBe('GET');
+    expect(req.request.method).toBe('GET'); // Solicitud GET
 
-    req.flush([mockMembership]);
+    req.flush([mockMembership]); // Respuesta simulada
   });
 
-  // ========================
-  // GET BY ID
-  // ========================
+  // 3. OBTENER MEMBRESÍA POR ID
+  // Prueba que getById devuelve la membresía correcta según su ID
   it('should get membership by id', () => {
     service.getById(1).subscribe(membership => {
-      expect(membership).toBeTruthy();
-      expect(membership.id_membresia).toBe(1);
-      expect(membership.duracion_meses).toEqual(6);
-      expect(membership.tipo).not.toBe('');
+      expect(membership).toBeTruthy(); // Membresía existe
+      expect(membership.id_membresia).toBe(1); // ID correcto
+      expect(membership.duracion_meses).toEqual(6); // Duración correcta
+      expect(membership.tipo).not.toBe(''); // Tipo no vacío
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('GET');
+    expect(req.request.method).toBe('GET'); // Solicitud GET por ID
 
-    req.flush(mockMembership);
+    req.flush(mockMembership); // Respuesta simulada
   });
 
-  // ========================
-  // CREATE
-  // ========================
+  // 4. CREAR MEMBRESÍA
+  // Prueba que create envía y recibe correctamente una nueva membresía
   it('should create a membership', () => {
     const createPayload: Membership = {
       tipo: 'Basic',
@@ -87,22 +84,21 @@ describe('Memberships Service', () => {
     };
 
     service.create(createPayload).subscribe(membership => {
-      expect(membership).toBeDefined();
-      expect(membership.tipo).toBe('Premium');
-      expect(membership.id_membresia).toBeGreaterThan(0);
+      expect(membership).toBeDefined(); // Debe retornar la membresía creada
+      expect(membership.tipo).toBe('Premium'); // Respuesta simulada retorna Premium
+      expect(membership.id_membresia).toBeGreaterThan(0); // ID asignado
     });
 
     const req = httpMock.expectOne(apiUrl);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body.tipo).toBe('Basic');
-    expect(req.request.body.precio).toBe(20);
+    expect(req.request.method).toBe('POST'); // Solicitud POST
+    expect(req.request.body.tipo).toBe('Basic'); // Body correcto
+    expect(req.request.body.precio).toBe(20); // Body correcto
 
-    req.flush(mockMembership);
+    req.flush(mockMembership); // Respuesta simulada
   });
 
-  // ========================
-  // UPDATE
-  // ========================
+  // 5. ACTUALIZAR MEMBRESÍA
+  // Prueba que update modifica la membresía correctamente
   it('should update a membership', () => {
     const updatePayload: Membership = {
       tipo: 'Gold',
@@ -111,29 +107,28 @@ describe('Memberships Service', () => {
     };
 
     service.update(1, updatePayload).subscribe(membership => {
-      expect(membership.tipo).toBe('Gold');
-      expect(membership.precio).toBe(70);
-      expect(membership.duracion_meses).toBeGreaterThan(6);
+      expect(membership.tipo).toBe('Gold'); // Tipo actualizado
+      expect(membership.precio).toBe(70); // Precio actualizado
+      expect(membership.duracion_meses).toBeGreaterThan(6); // Duración mayor
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body.tipo).toBe('Gold');
+    expect(req.request.method).toBe('PUT'); // Solicitud PUT
+    expect(req.request.body.tipo).toBe('Gold'); // Body actualizado
 
-    req.flush({ ...updatePayload, id_membresia: 1 });
+    req.flush({ ...updatePayload, id_membresia: 1 }); // Respuesta simulada
   });
 
-  // ========================
-  // DELETE
-  // ========================
+  // 6. ELIMINAR MEMBRESÍA
+  // Prueba que delete elimina la membresía correctamente
   it('should delete a membership', () => {
     service.delete(1).subscribe(response => {
-      expect(response).toBeNull();
+      expect(response).toBeNull(); // Respuesta esperada null
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('DELETE');
+    expect(req.request.method).toBe('DELETE'); // Solicitud DELETE
 
-    req.flush(null);
+    req.flush(null); // Respuesta simulada
   });
 });

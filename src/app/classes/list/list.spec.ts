@@ -6,8 +6,9 @@ import { of } from 'rxjs';
 import { List } from './list';
 import { Classes } from '../../services/classes';
 import { Class } from '../../models/class';
+import { By } from '@angular/platform-browser';
 
-describe('List', () => {
+describe('List Component - Classes', () => {
   let component: List;
   let fixture: ComponentFixture<List>;
   let service: jasmine.SpyObj<Classes>;
@@ -47,35 +48,68 @@ describe('List', () => {
     fixture.detectChanges();
   });
 
-  it('should create', () => {
+  // 1. El componente se crea correctamente
+  it('should create the component', () => {
     expect(component).toBeTruthy();
   });
 
+  // 2. La lista de clases se carga al inicializar
   it('should load classes on init', () => {
     expect(service.getAll).toHaveBeenCalled();
     expect(component.classes.length).toBe(1);
     expect(component.classes[0].nombre_clase).toBe('Yoga');
   });
 
+  // 3. Navegación al formulario de creación
   it('should navigate to create form', () => {
-    const spy = spyOn(router, 'navigate');
+    const navigateSpy = spyOn(router, 'navigate');
     component.navigateToCreate();
-    expect(spy).toHaveBeenCalledWith(['/classes/form']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/classes/form']);
   });
 
+  // 4. Navegación al formulario de edición de una clase existente
   it('should navigate to edit form', () => {
-    const spy = spyOn(router, 'navigate');
+    const navigateSpy = spyOn(router, 'navigate');
     component.edit(1);
-    expect(spy).toHaveBeenCalledWith(['/classes/form', 1]);
+    expect(navigateSpy).toHaveBeenCalledWith(['/classes/form', 1]);
   });
 
+  // 5. Confirmación de eliminación: eliminar clase cuando el usuario acepta
   it('should delete class when confirmed', () => {
     spyOn(window, 'confirm').and.returnValue(true);
     service.delete.and.returnValue(of({} as any));
 
     component.delete(1);
+    fixture.detectChanges();
 
     expect(service.delete).toHaveBeenCalledWith(1);
     expect(component.classes.length).toBe(0);
+  });
+
+  // 6. Cancelar eliminación: clase no se elimina si el usuario cancela
+  it('should not delete class when cancelled', () => {
+    spyOn(window, 'confirm').and.returnValue(false);
+    component.delete(1);
+    expect(service.delete).not.toHaveBeenCalled();
+    expect(component.classes.length).toBe(1);
+  });
+
+  // 7. La tabla muestra correctamente los datos de la clase
+  it('should render class data correctly in table', () => {
+    const rows = fixture.debugElement.queryAll(By.css('tbody tr'));
+    expect(rows.length).toBe(1);
+    const cells = rows[0].queryAll(By.css('td'));
+    expect(cells[1].nativeElement.textContent).toContain('Yoga');
+    expect(cells[2].nativeElement.textContent).toContain('Relajación');
+    expect(cells[5].nativeElement.textContent).toContain('Ana Pérez');
+  });
+
+  // 8. Los botones de acción (Editar / Eliminar) existen y son visibles
+  it('should have Edit and Delete buttons in table', () => {
+    const row = fixture.debugElement.query(By.css('tbody tr'));
+    const editButton = row.query(By.css('.btn-warning'));
+    const deleteButton = row.query(By.css('.btn-danger'));
+    expect(editButton).toBeTruthy();
+    expect(deleteButton).toBeTruthy();
   });
 });

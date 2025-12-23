@@ -24,110 +24,105 @@ describe('Clients Service', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
+        provideHttpClient(),          // Provee HttpClient real
+        provideHttpClientTesting(),   // Provee HttpClient para testing
       ],
     });
 
-    service = TestBed.inject(Clients);
-    httpMock = TestBed.inject(HttpTestingController);
+    service = TestBed.inject(Clients);          // Inyecta el servicio a testear
+    httpMock = TestBed.inject(HttpTestingController); // Inyecta el mock de HTTP
   });
 
   afterEach(() => {
+    // Verifica que no queden solicitudes HTTP pendientes después de cada prueba
     httpMock.verify();
   });
 
-  // ========================
-  // CREACIÓN DEL SERVICIO
-  // ========================
+  // 1. CREACIÓN DEL SERVICIO
+  // Verifica que el servicio de Clients se haya creado correctamente
   it('should be created', () => {
-    expect(service).toBeTruthy();
-    expect(service).toBeDefined();
+    expect(service).toBeTruthy(); // Servicio existe
+    expect(service).toBeDefined(); // Servicio está definido
   });
 
-  // ========================
-  // GET ALL
-  // ========================
+  // 2. OBTENER TODOS LOS CLIENTES
+  // Prueba que el método getAll retorna una lista de clientes correctamente
   it('should get all clients', () => {
     service.getAll().subscribe(clients => {
-      expect(clients).toBeTruthy();
-      expect(clients.length).toBeGreaterThan(0);
-      expect(clients[0].nombre).toBe('Juan');
-      expect(clients[0].email).toContain('@');
+      expect(clients).toBeTruthy(); // Debe retornar algo
+      expect(clients.length).toBeGreaterThan(0); // Debe tener al menos un cliente
+      expect(clients[0].nombre).toBe('Juan'); // Verifica datos del primer cliente
+      expect(clients[0].email).toContain('@'); // Email con formato válido
     });
 
     const req = httpMock.expectOne(apiUrl);
-    expect(req.request.method).toBe('GET');
+    expect(req.request.method).toBe('GET'); // Debe ser una solicitud GET
 
-    req.flush([mockClient]);
+    req.flush([mockClient]); // Simula la respuesta del servidor
   });
 
-  // ========================
-  // GET BY ID
-  // ========================
+  // 3. OBTENER CLIENTE POR ID
+  // Prueba que getById devuelve el cliente correcto según su ID
   it('should get client by id', () => {
     service.getById(1).subscribe(client => {
-      expect(client).toBeTruthy();
-      expect(client.id_cliente).toBe(1);
-      expect(client.nombre).toEqual('Juan');
-      expect(client.apellido).not.toBe('');
+      expect(client).toBeTruthy(); // Debe existir el cliente
+      expect(client.id_cliente).toBe(1); // Verifica el ID
+      expect(client.nombre).toEqual('Juan'); // Verifica el nombre
+      expect(client.apellido).not.toBe(''); // Apellido no vacío
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('GET');
+    expect(req.request.method).toBe('GET'); // Solicitud GET por ID
 
-    req.flush(mockClient);
+    req.flush(mockClient); // Respuesta simulada
   });
 
-  // ========================
-  // CREATE
-  // ========================
+  // 4. CREAR CLIENTE
+  // Prueba que el método create envía y recibe un cliente correctamente
   it('should create a client', () => {
     service.create(mockClient).subscribe(client => {
-      expect(client).toBeDefined();
-      expect(client.nombre).toBe('Juan');
-      expect(client.id_cliente).toBeGreaterThan(0);
+      expect(client).toBeDefined(); // Debe retornar cliente creado
+      expect(client.nombre).toBe('Juan'); // Nombre correcto
+      expect(client.id_cliente).toBeGreaterThan(0); // ID válido
     });
 
     const req = httpMock.expectOne(apiUrl);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body.nombre).toBe('Juan');
+    expect(req.request.method).toBe('POST'); // Solicitud POST
+    expect(req.request.body.nombre).toBe('Juan'); // Body enviado correcto
 
-    req.flush(mockClient);
+    req.flush(mockClient); // Respuesta simulada
   });
 
-  // ========================
-  // UPDATE
-  // ========================
+  // 5. ACTUALIZAR CLIENTE
+  // Prueba que update modifica los datos del cliente correctamente
   it('should update a client', () => {
     const updatedClient: Client = {
       ...mockClient,
-      nombre: 'Carlos',
+      nombre: 'Carlos', // Cambiamos el nombre
     };
 
     service.update(1, updatedClient).subscribe(client => {
-      expect(client.nombre).toBe('Carlos');
-      expect(client.nombre).not.toBe('Juan');
+      expect(client.nombre).toBe('Carlos'); // Verifica actualización
+      expect(client.nombre).not.toBe('Juan'); // Nombre anterior no debe aparecer
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body.nombre).toBe('Carlos');
+    expect(req.request.method).toBe('PUT'); // Solicitud PUT
+    expect(req.request.body.nombre).toBe('Carlos'); // Body actualizado
 
-    req.flush(updatedClient);
+    req.flush(updatedClient); // Respuesta simulada
   });
 
-  // ========================
-  // DELETE
-  // ========================
+  // 6. ELIMINAR CLIENTE
+  // Prueba que delete elimina el cliente correctamente
   it('should delete a client', () => {
     service.delete(1).subscribe(response => {
-      expect(response).toBeNull();
+      expect(response).toBeNull(); // Respuesta null esperado
     });
 
     const req = httpMock.expectOne(`${apiUrl}/1`);
-    expect(req.request.method).toBe('DELETE');
+    expect(req.request.method).toBe('DELETE'); // Solicitud DELETE
 
-    req.flush(null);
+    req.flush(null); // Respuesta simulada
   });
 });

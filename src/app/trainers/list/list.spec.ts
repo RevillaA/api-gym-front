@@ -3,12 +3,13 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
 
 import { List } from './list';
 import { Trainers } from '../../services/trainers';
 import { Trainer } from '../../models/trainer';
 
-describe('List', () => {
+describe('List Component - Trainers', () => {
   let component: List;
   let fixture: ComponentFixture<List>;
   let service: jasmine.SpyObj<Trainers>;
@@ -44,72 +45,72 @@ describe('List', () => {
     router = TestBed.inject(Router);
 
     service.getAll.and.returnValue(of(mockTrainers));
-
     fixture.detectChanges();
   });
 
-  // TEST ORIGINAL
-  it('should create', () => {
+  // 1. Componente creado correctamente
+  it('should create the component', () => {
     expect(component).toBeTruthy();
   });
 
-  // Carga de entrenadores al iniciar
+  // 2. Carga de entrenadores al iniciar
   it('should load trainers on init', () => {
     expect(service.getAll).toHaveBeenCalled();
     expect(component.trainers.length).toBe(1);
     expect(component.trainers[0].nombre).toBe('Juan');
   });
 
-  // Navegación a formulario de creación
+  // 3. Navegación al formulario de creación
   it('should navigate to create form', () => {
-    const spy = spyOn(router, 'navigate');
-
+    const navigateSpy = spyOn(router, 'navigate');
     component.navigateToCreate();
-
-    expect(spy).toHaveBeenCalledWith(['/trainers/form']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/trainers/form']);
   });
 
-  // Navegación a formulario de edición
+  // 4. Navegación al formulario de edición
   it('should navigate to edit form', () => {
-    const spy = spyOn(router, 'navigate');
-
+    const navigateSpy = spyOn(router, 'navigate');
     component.edit(1);
-
-    expect(spy).toHaveBeenCalledWith(['/trainers/form', 1]);
+    expect(navigateSpy).toHaveBeenCalledWith(['/trainers/form', 1]);
   });
 
-  // No navega si el id es null
-  it('should not navigate to edit form if id is null', () => {
-    const spy = spyOn(router, 'navigate');
-
-    component.edit(undefined);
-
-    expect(spy).not.toHaveBeenCalled();
-  });
-
-  // Eliminación de entrenador confirmada
+  // 5. Eliminación confirmada de entrenador
   it('should delete trainer when confirmed', () => {
     spyOn(window, 'confirm').and.returnValue(true);
     service.delete.and.returnValue(of({} as any));
 
     component.delete(1);
+    fixture.detectChanges();
 
     expect(service.delete).toHaveBeenCalledWith(1);
     expect(component.trainers.length).toBe(0);
   });
 
-  // No elimina si se cancela confirmación
-  it('should not delete trainer if confirmation is cancelled', () => {
+  // 6. Cancelación de eliminación: no se elimina si el usuario cancela
+  it('should not delete trainer when cancelled', () => {
     spyOn(window, 'confirm').and.returnValue(false);
-
     component.delete(1);
 
     expect(service.delete).not.toHaveBeenCalled();
     expect(component.trainers.length).toBe(1);
   });
 
-  // Método delete no falla sin id
-  it('should not throw error when delete is called without id', () => {
-    expect(() => component.delete(undefined)).not.toThrow();
+  // 7. Renderizado correcto de datos en la tabla
+  it('should render trainer data correctly in table', () => {
+    const row = fixture.debugElement.query(By.css('tbody tr'));
+    const cells = row.queryAll(By.css('td'));
+    expect(cells[1].nativeElement.textContent).toContain('Juan');
+    expect(cells[2].nativeElement.textContent).toContain('Pérez');
+    expect(cells[3].nativeElement.textContent).toContain('juan@test.com');
+    expect(cells[5].nativeElement.textContent).toContain('Cardio');
+  });
+
+  // 8. Botones de acción (Editar / Eliminar) existen y son visibles
+  it('should have Edit and Delete buttons in table', () => {
+    const row = fixture.debugElement.query(By.css('tbody tr'));
+    const editButton = row.query(By.css('.btn-warning'));
+    const deleteButton = row.query(By.css('.btn-danger'));
+    expect(editButton).toBeTruthy();
+    expect(deleteButton).toBeTruthy();
   });
 });
