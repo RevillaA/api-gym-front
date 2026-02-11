@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideRouter, Router } from '@angular/router';
+import { provideRouter, Router, ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { Form } from './form';
@@ -13,6 +13,7 @@ describe('Trainer Form Component - Frontend Unit Tests', () => {
   let fixture: ComponentFixture<Form>;
   let service: jasmine.SpyObj<Trainers>;
   let router: Router;
+  let activatedRoute: any;
 
   const mockTrainer: Trainer = {
     id_entrenador: 1,
@@ -35,6 +36,12 @@ describe('Trainer Form Component - Frontend Unit Tests', () => {
 
   beforeEach(async () => {
     const serviceSpy = jasmine.createSpyObj('Trainers', ['getById', 'create', 'update']);
+    
+    activatedRoute = {
+      snapshot: {
+        params: {}
+      }
+    };
 
     await TestBed.configureTestingModule({
       imports: [Form],
@@ -43,6 +50,7 @@ describe('Trainer Form Component - Frontend Unit Tests', () => {
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: Trainers, useValue: serviceSpy },
+        { provide: ActivatedRoute, useValue: activatedRoute }
       ],
     }).compileComponents();
 
@@ -140,5 +148,54 @@ describe('Trainer Form Component - Frontend Unit Tests', () => {
     const navigateSpy = spyOn(router, 'navigate');
     component.cancel();
     expect(navigateSpy).toHaveBeenCalledWith(['/trainers']);
+  });
+
+  // 11. Debe actualizar un entrenador cuando el formulario es válido en modo edición
+  it('should update trainer when form is valid in edit mode', () => {
+    const navigateSpy = spyOn(router, 'navigate');
+    
+    component.form.setValue(validFormData);
+    component.isEdit = true;
+    component.id = 1;
+    component.submit();
+
+    expect(service.update).toHaveBeenCalledWith(1, validFormData);
+    expect(navigateSpy).toHaveBeenCalledWith(['/trainers']);
+  });
+
+  // 12. Debe cargar datos del entrenador en modo edición
+  it('should load trainer data in edit mode', () => {
+    service.getById.and.returnValue(of(mockTrainer));
+    activatedRoute.snapshot.params = { id: '1' };
+    
+    component.ngOnInit();
+
+    expect(component.isEdit).toBeTrue();
+    expect(component.id).toBe(1);
+    expect(service.getById).toHaveBeenCalledWith(1);
+  });
+
+  // 13. No debe cargar datos en modo creación
+  it('should not load data in create mode', () => {
+    activatedRoute.snapshot.params = {};
+    
+    component.ngOnInit();
+
+    expect(component.isEdit).toBeFalse();
+    expect(component.id).toBeUndefined();
+    expect(service.getById).not.toHaveBeenCalled();
+  });
+
+  // 14. El título debe cambiar según el modo (crear/editar)
+  it('should display correct title based on mode', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    
+    component.isEdit = false;
+    fixture.detectChanges();
+    expect(compiled.querySelector('h2')?.textContent).toContain('Crear Entrenador');
+    
+    component.isEdit = true;
+    fixture.detectChanges();
+    expect(compiled.querySelector('h2')?.textContent).toContain('Editar Entrenador');
   });
 });

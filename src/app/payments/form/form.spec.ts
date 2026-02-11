@@ -20,6 +20,7 @@ describe('Payment Form', () => {
   let clientsService: jasmine.SpyObj<Clients>;
   let membershipsService: jasmine.SpyObj<Memberships>;
   let router: Router;
+  let activatedRoute: any;
 
   const mockClients: Client[] = [
     { id_cliente: 1, nombre: 'Juan', apellido: 'Perez' } as Client,
@@ -30,6 +31,7 @@ describe('Payment Form', () => {
   ];
 
   const mockPayment: Payment = {
+    id_pago: 1,
     id_cliente: 1,
     id_membresia: 1,
     monto: 50,
@@ -43,6 +45,12 @@ describe('Payment Form', () => {
     clientsService.getAll.and.returnValue(of(mockClients));
     membershipsService.getAll.and.returnValue(of(mockMemberships));
 
+    activatedRoute = {
+      snapshot: {
+        params: {}
+      }
+    };
+
     await TestBed.configureTestingModule({
       imports: [Form],
       providers: [
@@ -52,10 +60,7 @@ describe('Payment Form', () => {
         { provide: Payments, useValue: paymentsService },
         { provide: Clients, useValue: clientsService },
         { provide: Memberships, useValue: membershipsService },
-        {
-          provide: ActivatedRoute,
-          useValue: { snapshot: { params: {} } },
-        },
+        { provide: ActivatedRoute, useValue: activatedRoute },
       ],
     }).compileComponents();
 
@@ -158,5 +163,50 @@ describe('Payment Form', () => {
     });
 
     expect(component.form.valid).toBeTrue();
+  });
+
+  // 9. No debe enviar el formulario si es inválido
+  it('should not submit when form is invalid', () => {
+    component.form.reset();
+    component.submit();
+
+    expect(paymentsService.create).not.toHaveBeenCalled();
+    expect(paymentsService.update).not.toHaveBeenCalled();
+  });
+
+  // 10. Debe cargar datos del pago en modo edición
+  it('should load payment data in edit mode', () => {
+    paymentsService.getById.and.returnValue(of(mockPayment));
+    activatedRoute.snapshot.params = { id: '1' };
+    
+    component.ngOnInit();
+
+    expect(component.isEdit).toBeTrue();
+    expect(component.id).toBe(1);
+    expect(paymentsService.getById).toHaveBeenCalledWith(1);
+  });
+
+  // 11. No debe cargar datos en modo creación
+  it('should not load payment data in create mode', () => {
+    activatedRoute.snapshot.params = {};
+    
+    component.ngOnInit();
+
+    expect(component.isEdit).toBeFalse();
+    expect(component.id).toBeUndefined();
+    expect(paymentsService.getById).not.toHaveBeenCalled();
+  });
+
+  // 12. El título debe cambiar según el modo (crear/editar)
+  it('should display correct title based on mode', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    
+    component.isEdit = false;
+    fixture.detectChanges();
+    expect(compiled.querySelector('h2')?.textContent).toContain('Crear Pago');
+    
+    component.isEdit = true;
+    fixture.detectChanges();
+    expect(compiled.querySelector('h2')?.textContent).toContain('Editar Pago');
   });
 });

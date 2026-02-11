@@ -113,4 +113,34 @@ describe('List Component - Trainers', () => {
     expect(editButton).toBeTruthy();
     expect(deleteButton).toBeTruthy();
   });
+
+  // 9. No navegar cuando edit recibe null
+  it('should not navigate when edit receives null', () => {
+    const navigateSpy = spyOn(router, 'navigate');
+    component.edit(null as any);
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  // 10. No navegar cuando edit recibe undefined
+  it('should not navigate when edit receives undefined', () => {
+    const navigateSpy = spyOn(router, 'navigate');
+    component.edit(undefined);
+    expect(navigateSpy).not.toHaveBeenCalled();
+  });
+
+  // 11. No eliminar cuando delete recibe null
+  it('should not delete when delete receives null', () => {
+    const confirmSpy = spyOn(window, 'confirm');
+    component.delete(null as any);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(service.delete).not.toHaveBeenCalled();
+  });
+
+  // 12. No eliminar cuando delete recibe undefined
+  it('should not delete when delete receives undefined', () => {
+    const confirmSpy = spyOn(window, 'confirm');
+    component.delete(undefined);
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(service.delete).not.toHaveBeenCalled();
+  });
 });
